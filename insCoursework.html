@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+
+<style>
+table, th, td {
+    border:1px solid red;
+}
+</style>
+
+<head>
+    <title>Crashes</title>
+    
+    <link type="text/css" rel="stylesheet" href="https://api.mqcdn.com/sdk/mapquest-js/v1.3.2/mapquest.css"/>
+
+    <script src="https://api.mqcdn.com/sdk/mapquest-js/v1.3.2/mapquest.js"></script>
+
+    <script>
+
+        /*
+        Sets the location of the map to show using a switch case based on what the select tag option is on.
+        */
+        function setMapLocation(compare){
+            switch(compare){
+                case "New York": 
+                    map.setView([40.71,-74.00],10);
+                    break;
+                case "Los Angeles": 
+                    map.setView([34.05,-118.24],10);
+                    break;
+                case "Chicago": 
+                    map.setView([41.85,-87.65],10);
+                    break;
+                case "Seattle": 
+                    map.setView([47.60,-122.33],10);
+                    break;
+                case "Washington DC": 
+                    map.setView([38.89,-77.03],10);
+                    break;
+            }
+        }
+       
+        /*
+        returns the coordinates for the location of the current city by accessing the select tag and checking current option
+        calls function for map to centre around particular city
+        Called to add coordinates to the link
+        */
+        function getLocation(){
+            var cities = document.getElementById("cities");
+            const compare = "" + cities.options[cities.selectedIndex].text;
+            setMapLocation(compare);
+            return '' + cities.options[cities.selectedIndex].value;   
+        }
+
+        /*
+        Called when a new request mad by user for a city.
+        Loads the map and the table by parsing through JSON response accessing the data
+        and displaying the data by accessing the elements of the html page
+        */
+        function load(){
+
+            var table = document.getElementById("table");
+            table.innerHTML = ""; //clears table
+
+            //sets header of table to Number and description
+            var header = table.createTHead();
+            var row = header.insertRow(0);
+            var number = row.insertCell(0);
+            number.innerHTML = "<b>Number</b>";
+            var desc = row.insertCell(1);
+            desc.innerHTML = "<b>Description</b>";
+
+
+            const xhttp = new XMLHttpRequest();
+            xhttp.onreadystatechange = function(){
+            
+                if(this.readyState == 4 && this.status == 200){
+                    myJson = JSON.parse(this.responseText);
+
+                    let incidents = myJson.incidents;
+                    var number = 0;
+                    var table = document.getElementById("table");
+                    //For each element creates an new row and adds a point on the map
+                    incidents.forEach(element => {
+                        var desc = element.shortDesc;
+
+                        var newRow = table.insertRow();
+
+                        var cell1 = newRow.insertCell();
+                        var cell2 = newRow.insertCell();
+
+                        var numberText = document.createTextNode(" " + number);
+                        var descText = document.createTextNode(desc);
+
+                        cell1.appendChild(numberText);
+                        cell2.appendChild(descText);
+
+                        L.circle([element.lat,element.lng],{radius:2}).addTo(map);
+
+                        console.log(element.shortDesc);
+                        number++;
+                    });
+                } 
+            }
+            xhttp.open("GET",'http://www.mapquestapi.com/traffic/v2/incidents?key=nAqs5s89fekqYipa8k6jlVYrRfAK93q8' +
+            '&boundingBox=' + getLocation() + '&filters=construction,incidents');
+            xhttp.send();
+        }
+
+    </script>
+
+</head>
+
+<body>
+    <!--User welcome and advice-->
+    <div>
+        <h1>Welcome to incidents report</h1>
+
+        <h3>Choose a city and press search to start</h2>
+    </div>
+    
+    <div>
+        <label for="cities">Choose a city: </label>
+    </div>
+
+    <!-- Option selection for cities-->
+    <div>
+        <select name="cities" id="cities">
+            <option value='40.49,-74.22,40.93,-73.78'>New York</option>
+            <option value="33.83,-118.46,34.27,-118.02">Los Angeles</option>
+            <option value="41.63,-87.87,42.07,-87.43">Chicago</option>
+            <option value="47.38,-122.55,47.60,-122.11" >Seattle</option>
+            <option value="38.67,-77.25,39.11,-76.81" >Washington DC</option>
+        </select>
+    </div>
+
+    <div>
+        <button onclick="load()">Search</button>
+    </div>
+
+    
+
+    <div id="map" style="width: 100%; height: 530px;"></div>
+
+    <!--Initial table -->
+    <div>
+        <div style= "display: inline-flex;" id="desc"></div> 
+
+        <table style="width:100%" id="table">
+            <tr>
+                <th>Number</th>
+                <th>Description</th>
+            </tr>
+        </table>
+
+    </div>
+    
+    <!--Map script for initialising the map-->
+    <script>
+        L.mapquest.key = 'nAqs5s89fekqYipa8k6jlVYrRfAK93q8';
+
+
+        var map = L.mapquest.map('map', {
+        center: [37.7749, -122.4194],
+        
+        layers: L.mapquest.tileLayer('map'),
+        zoom: 12
+        });
+    </script>
+
+</body>
+
+</html>
